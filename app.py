@@ -1,8 +1,8 @@
 from flask import Flask, jsonify
 from pymongo import MongoClient
 import os
+from bson import ObjectId  # Import ObjectId from BSON
 
-# Initialize Flask app
 app = Flask(__name__)
 
 # MongoDB connection setup
@@ -15,6 +15,12 @@ client = MongoClient(mongo_uri)
 db = client["icai-db"]  # Replace with your actual database name
 collection = db["papers-data"]  # Replace with your actual collection name
 
+# Helper function to serialize ObjectId as a string
+def serialize_objectid(item):
+    if isinstance(item, ObjectId):
+        return str(item)
+    return item
+
 # Route to get all data from the collection
 @app.route("/get-data", methods=["GET"])
 def get_data():
@@ -23,9 +29,12 @@ def get_data():
         data_cursor = collection.find({})
         data_list = list(data_cursor)
         
+        # Convert ObjectIds to strings in all documents
+        serialized_data = [jsonify_data(item) for item in data_list]
+
         # Check if data exists and return it
-        if data_list:
-            return jsonify(data_list), 200
+        if serialized_data:
+            return jsonify(serialized_data), 200
         else:
             return jsonify({"error": "No data found"}), 404
     except Exception as e:
@@ -39,15 +48,27 @@ def get_data_by_playlist(playlist_index):
         # Fetch data based on playlist index
         data_cursor = collection.find({"playlist_index": playlist_index})
         data_list = list(data_cursor)
+
+        # Convert ObjectIds to strings in all documents
+        serialized_data = [jsonify_data(item) for item in data_list]
         
         # Check if data exists for the given index
-        if data_list:
-            return jsonify(data_list), 200
+        if serialized_data:
+            return jsonify(serialized_data), 200
         else:
             return jsonify({"error": f"No data found for playlist index {playlist_index}"}), 404
     except Exception as e:
         # Handle database connection errors or other issues
         return jsonify({"error": str(e)}), 500
+
+# Function to serialize MongoDB documents
+def jsonify_data(data):
+    if isinstance(data, dict):
+        return {key: serialize_objectid(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [jsonify_data(item) for item in data]
+    else:
+        return data
 
 # Main entry point for the Flask application
 if __name__ == "__main__":
