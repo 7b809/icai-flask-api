@@ -18,7 +18,7 @@ db = client["icai-db"]  # Database name
 collection = db["papers-data"]  # Collection name
 
 # Set the path to chromedriver.exe
-chrome_driver_path = r"D:\files\chromedriver-win64\chromedriver-win64\chromedriver.exe"
+chrome_driver_path = r"chromedriver"
 
 # Set up Chrome options
 chrome_options = ChromeOptions()
