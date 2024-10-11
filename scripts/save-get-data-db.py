@@ -101,6 +101,7 @@ for index, url in enumerate(url_list):
         playlist_data.append(video_data)
 
     playlist_summary = {
+        "playlist_links": url_list,  # Correct the reference for playlist links
         "total_sessions": total_sessions,
         "videos": playlist_data
     }
