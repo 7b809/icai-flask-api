@@ -1,9 +1,11 @@
 from flask import Flask, jsonify
+from flask_cors import CORS  # Import CORS from flask_cors
 from pymongo import MongoClient
 import os
 from bson import ObjectId  # Import ObjectId from BSON
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # MongoDB connection setup
 mongo_uri = os.getenv("MONGO_URI")  # MongoDB URI from environment variable
@@ -41,25 +43,10 @@ def get_data():
         # Handle database connection errors or other issues
         return jsonify({"error": str(e)}), 500
 
-# Route to get data by playlist index
-@app.route("/get-data/<int:playlist_index>", methods=["GET"])
-def get_data_by_playlist(playlist_index):
-    try:
-        # Fetch data based on playlist index
-        data_cursor = collection.find({"playlist_index": playlist_index})
-        data_list = list(data_cursor)
-
-        # Convert ObjectIds to strings in all documents
-        serialized_data = [jsonify_data(item) for item in data_list]
-        
-        # Check if data exists for the given index
-        if serialized_data:
-            return jsonify(serialized_data), 200
-        else:
-            return jsonify({"error": f"No data found for playlist index {playlist_index}"}), 404
-    except Exception as e:
-        # Handle database connection errors or other issues
-        return jsonify({"error": str(e)}), 500
+# Route for the home page
+@app.route("/*", methods=["GET"])
+def home():
+    return "<h1>Welcome to ICAI Video Playlist API</h1>"
 
 # Function to serialize MongoDB documents
 def jsonify_data(data):
