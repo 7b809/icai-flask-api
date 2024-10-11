@@ -64,11 +64,16 @@ for index, url in enumerate(url_list):
         parts = [part.strip() for part in full_text if part.strip()]
 
         try:
-            paper_and_topic = parts[4].split('|')
+            # Store the entire original title
+            original_titles = parts[4] if len(parts) > 4 else "No Title"
+
+            # Split the title for further subdivision
+            paper_and_topic = original_titles.split('|')
             paper_name = paper_and_topic[0].strip() if len(paper_and_topic) > 0 else "No Paper Name"
             topic_name = paper_and_topic[1].strip() if len(paper_and_topic) > 1 else "No Topic"
-            duration = parts[1] if len(parts) > 1 else "No Duration"
             session = paper_and_topic[2].strip() if len(paper_and_topic) > 2 and 'Session' in paper_and_topic[2] else "No Session"
+
+            duration = parts[1] if len(parts) > 1 else "No Duration"
 
             if session != "No Session":
                 total_sessions += 1
@@ -78,6 +83,7 @@ for index, url in enumerate(url_list):
             upcoming_status = video_renderer.find('span', string='UPCOMING')
 
             video_data = {
+                "original_titles": original_titles,  # Add original title to the video data
                 "paper_name": paper_name,
                 "topic_name": topic_name,
                 "session": session,
