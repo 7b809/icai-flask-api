@@ -10,8 +10,8 @@ from pymongo import MongoClient
 
 # MongoDB Atlas connection setup
 mongo_uri = os.getenv("MONGO_URI")  # MongoDB URI from environment variable
-
 client = MongoClient(mongo_uri)
+
 db = client["icai-db"]  # Database name
 original_collection = db["papers-data"]  # Original collection
 temp_collection = db["papers-data-temp"]  # Temporary collection
@@ -51,11 +51,11 @@ for index, url in enumerate(url_list):
 
     soup = BeautifulSoup(browser.page_source, 'html.parser')
 
-    # Dictionary to store videos grouped by paper_name
-    videos_by_paper = {}
-    video_renderers = soup.find_all('ytd-playlist-panel-video-renderer')
-
+    # Dictionary to store grouped data by paper_name
+    grouped_data = {}
     total_sessions = 0
+
+    video_renderers = soup.find_all('ytd-playlist-panel-video-renderer')
 
     for video_renderer in video_renderers:
         # Extract full text content
@@ -83,7 +83,6 @@ for index, url in enumerate(url_list):
 
             video_data = {
                 "original_titles": original_titles,  # Add original title to the video data
-                "paper_name": paper_name,
                 "topic_name": topic_name,
                 "session": session,
                 "duration": duration,
@@ -92,26 +91,29 @@ for index, url in enumerate(url_list):
             }
 
             # Group videos by paper_name
-            if paper_name not in videos_by_paper:
-                videos_by_paper[paper_name] = []  # Create new list for each paper_name
+            if paper_name not in grouped_data:
+                grouped_data[paper_name] = {
+                    "videos_count": 0,
+                    "videos": []
+                }
 
-            videos_by_paper[paper_name].append(video_data)
+            grouped_data[paper_name]["videos"].append(video_data)
+            grouped_data[paper_name]["videos_count"] += 1
 
         except (IndexError, AttributeError) as e:
+            # Log errors in video data
             video_data = {
                 "error": f"Data format doesn't match expected structure: {str(e)}",
                 "raw_parts": parts
             }
-
-            # Add to a special group for ungrouped or errored items
-            if "Ungrouped" not in videos_by_paper:
-                videos_by_paper["Ungrouped"] = []
-            videos_by_paper["Ungrouped"].append(video_data)
+            if "Errors" not in grouped_data:
+                grouped_data["Errors"] = []
+            grouped_data["Errors"].append(video_data)
 
     playlist_summary = {
-        "playlist_links": url_list,  # Correct the reference for playlist links
+        "playlist_links": url_list,
         "total_sessions": total_sessions,
-        "videos": videos_by_paper  # Save grouped videos by paper_name
+        "videos": grouped_data  # Organized by paper_name with videos_count
     }
 
     # Insert the extracted data into the original MongoDB collection
