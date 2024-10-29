@@ -12,7 +12,6 @@ from pymongo import MongoClient
 mongo_uri = os.getenv("MONGO_URI")  # MongoDB URI from environment variable
 
 client = MongoClient(mongo_uri)
-
 db = client["icai-db"]  # Database name
 original_collection = db["papers-data"]  # Original collection
 temp_collection = db["papers-data-temp"]  # Temporary collection
@@ -52,8 +51,8 @@ for index, url in enumerate(url_list):
 
     soup = BeautifulSoup(browser.page_source, 'html.parser')
 
-    # List to store the extracted video data
-    playlist_data = []
+    # Dictionary to store videos grouped by paper_name
+    videos_by_paper = {}
     video_renderers = soup.find_all('ytd-playlist-panel-video-renderer')
 
     total_sessions = 0
@@ -92,18 +91,27 @@ for index, url in enumerate(url_list):
                 "status": "UPCOMING" if upcoming_status else "completed"
             }
 
+            # Group videos by paper_name
+            if paper_name not in videos_by_paper:
+                videos_by_paper[paper_name] = []  # Create new list for each paper_name
+
+            videos_by_paper[paper_name].append(video_data)
+
         except (IndexError, AttributeError) as e:
             video_data = {
                 "error": f"Data format doesn't match expected structure: {str(e)}",
                 "raw_parts": parts
             }
 
-        playlist_data.append(video_data)
+            # Add to a special group for ungrouped or errored items
+            if "Ungrouped" not in videos_by_paper:
+                videos_by_paper["Ungrouped"] = []
+            videos_by_paper["Ungrouped"].append(video_data)
 
     playlist_summary = {
         "playlist_links": url_list,  # Correct the reference for playlist links
         "total_sessions": total_sessions,
-        "videos": playlist_data
+        "videos": videos_by_paper  # Save grouped videos by paper_name
     }
 
     # Insert the extracted data into the original MongoDB collection
