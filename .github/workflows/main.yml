@@ -1,10 +1,10 @@
 name: Scrape YouTube Data and Save to MongoDB
-on: [push]
  
-# on: 
-#   schedule:
-#     - cron: '0 0 * * *'  # Runs once a day at midnight UTC
-#   # Optional: Trigger workflow manually (useful for testing)
+on: 
+  schedule:
+    - cron: '0 */6 * * *'  # Runs every 6 hours
+  # Optional: Trigger workflow manually (useful for testing)
+
 
 jobs:
   scrape:
